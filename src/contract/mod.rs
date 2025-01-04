@@ -240,7 +240,7 @@ impl<T: Transport> Contract<T> {
         from: Address,
         tx: &TransactionParameters,
         call_options: CallOptions,
-    ) -> Result<U256> {
+    ) -> crate::Result<U256> {
         self.eth
             .estimate_gas(
                 CallRequest {
@@ -259,7 +259,6 @@ impl<T: Transport> Contract<T> {
                 call_options,
             )
             .await
-            .map_err(Into::into)
     }
 
     /// Call constant function
@@ -410,19 +409,12 @@ mod contract_signing {
             tx.gas = if let Some(gas) = options.gas {
                 gas
             } else {
-                match self
-                    ._estimate_gas(
-                        Address::from_str(&from.to_string().as_str()).unwrap(),
-                        &tx,
-                        options.call_options.unwrap_or_default(),
-                    )
-                    .await
-                {
-                    Ok(gas) => gas,
-                    Err(e) => {
-                        return Err(e.into());
-                    }
-                }
+                self._estimate_gas(
+                    Address::from_str(&from).unwrap(),
+                    &tx,
+                    options.call_options.unwrap_or_default(),
+                )
+                .await?
             };
             if let Some(value) = options.value {
                 tx.value = value;
